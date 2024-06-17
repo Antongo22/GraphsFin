@@ -2,15 +2,11 @@
 {
     partial class Form1
     {
-        /// <summary>
-        /// Обязательная переменная конструктора.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
+        private System.Windows.Forms.Panel drawingPanel;
+        private System.Windows.Forms.Button btnFindPath;
+        private System.Windows.Forms.Button btnGenerateGraph;
 
-        /// <summary>
-        /// Освободить все используемые ресурсы.
-        /// </summary>
-        /// <param name="disposing">истинно, если управляемый ресурс должен быть удален; иначе ложно.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -20,21 +16,54 @@
             base.Dispose(disposing);
         }
 
-        #region Код, автоматически созданный конструктором форм Windows
-
-        /// <summary>
-        /// Требуемый метод для поддержки конструктора — не изменяйте 
-        /// содержимое этого метода с помощью редактора кода.
-        /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            this.drawingPanel = new System.Windows.Forms.Panel();
+            this.btnFindPath = new System.Windows.Forms.Button();
+            this.btnGenerateGraph = new System.Windows.Forms.Button();
+            this.SuspendLayout();
+            // 
+            // drawingPanel
+            // 
+            this.drawingPanel.Location = new System.Drawing.Point(12, 12);
+            this.drawingPanel.Name = "drawingPanel";
+            this.drawingPanel.Size = new System.Drawing.Size(776, 386);
+            this.drawingPanel.TabIndex = 0;
+            this.drawingPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.GraphVisualization_Paint);
+            // 
+            // btnFindPath
+            // 
+            this.btnFindPath.Location = new System.Drawing.Point(12, 404);
+            this.btnFindPath.Name = "btnFindPath";
+            this.btnFindPath.Size = new System.Drawing.Size(75, 23);
+            this.btnFindPath.TabIndex = 1;
+            this.btnFindPath.Text = "Find Path";
+            this.btnFindPath.UseVisualStyleBackColor = true;
+            this.btnFindPath.Click += new System.EventHandler(this.btnFindPath_Click);
+            // 
+            // btnGenerateGraph
+            // 
+            this.btnGenerateGraph.Location = new System.Drawing.Point(93, 404);
+            this.btnGenerateGraph.Name = "btnGenerateGraph";
+            this.btnGenerateGraph.Size = new System.Drawing.Size(100, 23);
+            this.btnGenerateGraph.TabIndex = 2;
+            this.btnGenerateGraph.Text = "Generate Graph";
+            this.btnGenerateGraph.UseVisualStyleBackColor = true;
+            this.btnGenerateGraph.Click += new System.EventHandler(this.btnGenerateGraph_Click);
+            // 
+            // GraphVisualization
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "Form1";
+            this.Controls.Add(this.btnGenerateGraph);
+            this.Controls.Add(this.btnFindPath);
+            this.Controls.Add(this.drawingPanel);
+            this.Name = "GraphVisualization";
+            this.Text = "Graph Visualization";
+            this.ResumeLayout(false);
         }
-
-        #endregion
     }
 }
 
+    
