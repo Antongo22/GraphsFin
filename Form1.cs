@@ -1,24 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Text;
 using System.Windows.Forms;
 
 namespace GraphsFin
 {
     public partial class Form1 : Form
     {
-        private const int Rows = 3; // Количество строк
-        private const int Cols = 5; // Количество столбцов
-        private const int VertexSize = 20;
-        private const int Padding = 50; // Увеличенное расстояние между точками
+        private const int Rows = 5;
+        private const int Cols = 7;
+        private const int VertexSize = 15;
+        private const int Padding = 20;
         private GraphMatrix graph;
         private List<Point> points;
         private List<int> path;
+        private TextBox pathTextBox;
 
         public Form1()
         {
             InitializeComponent();
             InitializeGraph();
+
+            pathTextBox = new TextBox();
+            pathTextBox.Multiline = true;
+            pathTextBox.Width = 200;
+            pathTextBox.Height = 100;
+            pathTextBox.Location = new Point(10, 10);
+            this.Controls.Add(pathTextBox);
         }
 
         private void InitializeGraph()
@@ -27,18 +36,16 @@ namespace GraphsFin
             graph = new GraphMatrix(numVertices);
             points = new List<Point>();
 
-            // Генерация вершин
             for (int i = 0; i < Rows; i++)
             {
                 for (int j = 0; j < Cols; j++)
                 {
                     int vertexIndex = i * Cols + j;
-                    graph.SetVertexName(vertexIndex, vertexIndex.ToString());
+                    graph.SetVertexName(vertexIndex, $"V{vertexIndex}");
                     points.Add(new Point(Padding + j * VertexSize * 4, Padding + i * VertexSize * 4));
                 }
             }
 
-            // Добавляем случайные дополнительные ребра
             GenerateRandomGraph();
         }
 
@@ -46,66 +53,55 @@ namespace GraphsFin
         {
             int numVertices = Rows * Cols;
             Random rand = new Random();
-
-            int maxAttempts = 100; // Максимальное количество попыток генерации
+            int maxAttempts = 10000;
             int attempts = 0;
 
             while (attempts < maxAttempts)
             {
-                // Очищаем матрицу смежности
                 Array.Clear(graph.adjacencyMatrix, 0, graph.adjacencyMatrix.Length);
 
-                // Создаем случайные дополнительные ребра
                 for (int i = 0; i < numVertices; i++)
                 {
-                    int edges = rand.Next(0, 3); // От 0 до 2 рёбер
-                    int currentEdges = graph.GetEdgeCount(i); // Текущее количество рёбер для вершины
+                    int edges = rand.Next(1, 3);
+                    int currentEdges = graph.GetEdgeCount(i);
 
                     while (currentEdges < edges)
                     {
-                        // Генерируем случайное направление (включая диагонали)
-                        int dx = rand.Next(-1, 2);
-                        int dy = rand.Next(-1, 2);
+                        int dest = rand.Next(numVertices);
 
-                        int destRow = i / Cols + dy;
-                        int destCol = i % Cols + dx;
-
-                        if (destRow >= 0 && destRow < Rows && destCol >= 0 && destCol < Cols)
+                        if (i != dest && graph.GetEdgeCount(dest) < 2 && graph.adjacencyMatrix[i, dest] == 0)
                         {
-                            int dest = destRow * Cols + destCol;
-                            if (i != dest && graph.GetEdgeCount(dest) < 2 && graph.adjacencyMatrix[i, dest] == 0)
-                            {
-                                graph.AddEdge(i, dest);
-                                currentEdges++;
-                            }
+                            graph.AddEdge(i, dest);
+                            currentEdges++;
                         }
                     }
                 }
 
-                if (HasPathFromStartToEnd())
+                if (HasPathFromStartToEnd(minPathLength: 3))
                 {
+                    drawingPanel.Invalidate();
                     return;
                 }
 
                 attempts++;
             }
 
-            MessageBox.Show("Не удалось сгенерировать граф с путём от начала до конца.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show("Не удалось сгенерировать граф с путём от начала до конца через 3 и более точки.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
-        private bool HasPathFromStartToEnd()
+        private bool HasPathFromStartToEnd(int minPathLength)
         {
             List<int> path;
             graph.BFS(0, Rows * Cols - 1, out path);
-            return path != null;
+
+            return path != null && path.Count >= minPathLength;
         }
 
         private void GraphVisualization_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
+            Pen edgePen = new Pen(Color.Black, 3);
 
-            // Рисуем ребра
-            Pen edgePen = new Pen(Color.Black, 3); // Увеличенная толщина ребер
             for (int i = 0; i < points.Count; i++)
             {
                 for (int j = i + 1; j < points.Count; j++)
@@ -117,16 +113,21 @@ namespace GraphsFin
                 }
             }
 
-            // Рисуем вершины
-            foreach (Point p in points)
+            Font font = new Font("Arial", 10);
+            Brush brush = Brushes.Black;
+
+            for (int i = 0; i < points.Count; i++)
             {
-                g.FillEllipse(Brushes.Black, p.X - VertexSize / 2, p.Y - VertexSize / 2, VertexSize, VertexSize);
+                g.FillEllipse(Brushes.Yellow, points[i].X - VertexSize / 2, points[i].Y - VertexSize / 2, VertexSize, VertexSize);
+                string vertexName = graph.GetVertexName(i);
+                SizeF nameSize = g.MeasureString(vertexName, font);
+                PointF namePosition = new PointF(points[i].X - nameSize.Width / 2, points[i].Y - nameSize.Height / 2);
+                g.DrawString(vertexName, font, brush, namePosition);
             }
 
-            // Рисуем путь, если он найден
             if (path != null)
             {
-                Pen pathPen = new Pen(Color.Red, 3); // Увеличенная толщина пути
+                Pen pathPen = new Pen(Color.Red, 3);
                 for (int i = 0; i < path.Count - 1; i++)
                 {
                     g.DrawLine(pathPen, points[path[i]], points[path[i + 1]]);
@@ -137,7 +138,42 @@ namespace GraphsFin
         private void btnFindPath_Click(object sender, EventArgs e)
         {
             graph.BFS(0, Rows * Cols - 1, out path);
-            drawingPanel.Invalidate(); // Перерисовываем форму для отображения пути
+            DisplayPath();
+            drawingPanel.Invalidate();
+
+            if (path != null)
+            {
+                StringBuilder pathMessage = new StringBuilder();
+                foreach (int vertex in path)
+                {
+                    pathMessage.Append(graph.GetVertexName(vertex)).Append(" ");
+                }
+                label1.Text = $"Путь: {pathMessage.ToString()}";
+            }
+            else
+            {
+                MessageBox.Show("Путь не найден.", "Путь не найден", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void DisplayPath()
+        {
+            if (path != null)
+            {
+                StringBuilder pathInfo = new StringBuilder();
+                pathInfo.AppendLine("Найденный путь:");
+
+                for (int i = 0; i < path.Count; i++)
+                {
+                    pathInfo.AppendLine(graph.GetVertexName(path[i]));
+                }
+
+                pathTextBox.Text = pathInfo.ToString();
+            }
+            else
+            {
+                pathTextBox.Text = "Путь не найден.";
+            }
         }
 
         private void btnGenerateGraph_Click(object sender, EventArgs e)
@@ -145,14 +181,14 @@ namespace GraphsFin
             graph = null;
             points.Clear();
             path = null;
+            pathTextBox.Text = string.Empty;
             drawingPanel.Invalidate();
 
             InitializeGraph();
-            drawingPanel.Invalidate(); // Перерисовываем форму для отображения нового графа
+            drawingPanel.Invalidate();
         }
     }
 
-    // Добавьте класс GraphMatrix здесь
     public class GraphMatrix
     {
         public int[,] adjacencyMatrix;
@@ -176,6 +212,11 @@ namespace GraphsFin
             vertexNames[vertex] = name;
         }
 
+        public string GetVertexName(int vertex)
+        {
+            return vertexNames[vertex];
+        }
+
         public void AddEdge(int source, int destination, int weight = 1)
         {
             adjacencyMatrix[source, destination] = weight;
@@ -185,9 +226,9 @@ namespace GraphsFin
         public int GetEdgeCount(int vertex)
         {
             int count = 0;
-            for (int i = 0; i < numVertices; i++)
+            for (int i = 0; i < adjacencyMatrix.GetLength(1); i++)
             {
-                if (adjacencyMatrix[vertex, i] != 0)
+                if (adjacencyMatrix[vertex, i] != 0 || adjacencyMatrix[i, vertex] != 0)
                 {
                     count++;
                 }
@@ -195,7 +236,7 @@ namespace GraphsFin
             return count;
         }
 
-        public void BFS(int startVertex, int targetVertex, out List<int> path)
+        public bool BFS(int startVertex, int targetVertex, out List<int> path)
         {
             bool[] visited = new bool[numVertices];
             Queue<int> queue = new Queue<int>();
@@ -216,7 +257,7 @@ namespace GraphsFin
                 if (currentVertex == targetVertex)
                 {
                     path = ConstructPath(previous, startVertex, targetVertex);
-                    return;
+                    return true;
                 }
 
                 for (int i = 0; i < numVertices; i++)
@@ -230,7 +271,8 @@ namespace GraphsFin
                 }
             }
 
-            path = null; // Путь не найден
+            path = null;
+            return false;
         }
 
         private List<int> ConstructPath(int[] previous, int startVertex, int targetVertex)
